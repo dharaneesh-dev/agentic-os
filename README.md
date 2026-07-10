@@ -1,1 +1,1 @@
-# agentic-os
+# Refactored version of my final year project [Agentic OS]
