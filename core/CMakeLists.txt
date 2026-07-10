@@ -4,6 +4,7 @@ project(cooper_core CXX C)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
@@ -102,6 +103,8 @@ add_library(cooper_core
   src/embeddings/mock_embedding_provider.cpp
   src/context/context_packer.cpp
 )
+
+set_target_properties(cooper_core PROPERTIES OUTPUT_NAME cooper_core_static)
 
 if(COOPER_ENABLE_LLAMA_CPP)
   target_sources(cooper_core PRIVATE src/embeddings/llama_embedding_provider.cpp)
