@@ -1,0 +1,54 @@
+name: core-ci
+
+on:
+  push:
+    paths:
+      - "core/**"
+      - ".github/workflows/core-ci.yml"
+  pull_request:
+    paths:
+      - "core/**"
+      - ".github/workflows/core-ci.yml"
+
+jobs:
+  build-and-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install prerequisites (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgit2-dev pkg-config
+
+      - name: Install prerequisites (macOS)
+        if: runner.os == 'macOS'
+        run: brew install libgit2 pkg-config
+
+      - name: Install prerequisites (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          git clone https://github.com/microsoft/vcpkg
+          .\vcpkg\bootstrap-vcpkg.bat
+          .\vcpkg\vcpkg install libgit2:x64-windows
+
+      - name: Configure (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: cmake -S core -B core/build -DCOOPER_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Release
+
+      - name: Configure (Windows)
+        if: runner.os == 'Windows'
+        run: cmake -S core -B core/build -DCOOPER_BUILD_TESTS=ON -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows
+
+      - name: Build
+        run: cmake --build core/build --config Release -j
+
+      - name: Test
+        run: ctest --test-dir core/build -C Release --output-on-failure

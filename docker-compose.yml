@@ -1,0 +1,6 @@
+services:
+  cooper-core:
+    build:
+      context: ./core
+      dockerfile: Dockerfile
+    container_name: cooper-core-tests
