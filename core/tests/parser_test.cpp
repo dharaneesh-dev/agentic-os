@@ -74,3 +74,8 @@ TEST(ParserTest, ThrowsOnUnreadableFile) {
   Parser parser;
   EXPECT_THROW(parser.ParseFile("/nonexistent/path/does_not_exist.py"), std::runtime_error);
 }
+
+TEST(ParserTest, ThrowsOnUnsupportedExtension) {
+  Parser parser;
+  EXPECT_THROW(parser.ParseFile("/nonexistent/path/does_not_exist.cpp"), std::runtime_error);
+}

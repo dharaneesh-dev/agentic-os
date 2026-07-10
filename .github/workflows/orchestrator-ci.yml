@@ -1,0 +1,42 @@
+name: orchestrator-ci
+
+on:
+  push:
+    paths:
+      - "orchestrator/**"
+      - "core/**"
+      - ".github/workflows/orchestrator-ci.yml"
+  pull_request:
+    paths:
+      - "orchestrator/**"
+      - "core/**"
+      - ".github/workflows/orchestrator-ci.yml"
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install C++ prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgit2-dev pkg-config
+
+      - name: Configure core
+        run: cmake -S core -B core/build -DCOOPER_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build core
+        run: cmake --build core/build -j
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install orchestrator (with dev deps)
+        working-directory: orchestrator
+        run: pip install -e ".[dev]"
+
+      - name: Test
+        run: pytest orchestrator/tests -v

@@ -51,6 +51,11 @@ void CollectChunks(TSNode node, const std::string& source, std::vector<CodeChunk
 }  // namespace
 
 std::vector<CodeChunk> Parser::ParseFile(const std::filesystem::path& path) {
+  if (path.extension() != ".py") {
+    throw std::runtime_error("Parser: unsupported file extension for " + path.string() +
+                              "; only .py is currently supported");
+  }
+
   std::string source = ReadFile(path);
 
   TSParser* ts_parser = ts_parser_new();

@@ -1,0 +1,26 @@
+# Cooper orchestrator configuration.
+# Copy this file to config.yaml (searched for in the current working
+# directory, or at the path given by the COOPER_CONFIG_PATH env var) and
+# adjust values as needed. Any field can also be overridden with an
+# environment variable prefixed COOPER_, using __ as the nested delimiter,
+# e.g. COOPER_LLM__BASE_URL=http://ollama.internal:11434
+
+llm:
+  # Ollama can run on a separate host — never assume localhost.
+  base_url: "http://localhost:11434"
+  model: "qwen3-coder:30b"
+  request_timeout_seconds: 300
+
+sandbox:
+  image: "python:3.12-slim"
+  timeout_seconds: 60
+  memory_limit: "512m"
+  network_disabled: true
+
+git:
+  author_name: "Cooper Agent"
+  author_email: "cooper-agent@local"
+
+# Maximum number of Coder -> Tester retry loops before the pipeline gives up
+# and marks the task as failed.
+max_retries: 3

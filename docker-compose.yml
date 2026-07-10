@@ -4,3 +4,17 @@ services:
       context: ./core
       dockerfile: Dockerfile
     container_name: cooper-core-tests
+
+  orchestrator:
+    build:
+      context: .
+      dockerfile: orchestrator/Dockerfile
+    container_name: cooper-orchestrator
+    environment:
+      - COOPER_LLM__BASE_URL=${COOPER_LLM__BASE_URL:-http://host.docker.internal:11434}
+      - COOPER_LLM__MODEL=${COOPER_LLM__MODEL:-qwen3-coder:30b}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${PWD}/workspace:${PWD}/workspace

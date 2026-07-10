@@ -1,0 +1,8 @@
+.git/
+core/build/
+orchestrator/.venv/
+orchestrator/.pytest_cache/
+workspace/
+**/__pycache__/
+**/*.pyc
+.DS_Store

@@ -44,7 +44,11 @@ build/
 Build/
 build-*/
 
+#python ignores
 project.*
+__pycache__
+.venv/
+*.egg-info/
 
 # CMake generated files
 CMakeFiles/
@@ -69,3 +73,4 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+workspace/
