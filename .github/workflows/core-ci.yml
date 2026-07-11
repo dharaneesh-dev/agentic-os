@@ -26,18 +26,18 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgit2-dev pkg-config
+          sudo apt-get install -y libgit2-dev pkg-config libssl-dev
 
       - name: Install prerequisites (macOS)
         if: runner.os == 'macOS'
-        run: brew install libgit2 pkg-config
+        run: brew install libgit2 pkg-config openssl
 
       - name: Install prerequisites (Windows)
         if: runner.os == 'Windows'
         run: |
           git clone https://github.com/microsoft/vcpkg
           .\vcpkg\bootstrap-vcpkg.bat
-          .\vcpkg\vcpkg install libgit2:x64-windows
+          .\vcpkg\vcpkg install libgit2:x64-windows openssl:x64-windows
 
       - name: Configure (Linux/macOS)
         if: runner.os != 'Windows'
@@ -45,7 +45,7 @@ jobs:
 
       - name: Configure (Windows)
         if: runner.os == 'Windows'
-        run: cmake -S core -B core/build -DCOOPER_BUILD_TESTS=ON -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows
+        run: cmake -S core -B core/build -DCOOPER_BUILD_TESTS=ON -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows -DOPENSSL_ROOT_DIR=${{ github.workspace }}\vcpkg\installed\x64-windows
 
       - name: Build
         run: cmake --build core/build --config Release -j

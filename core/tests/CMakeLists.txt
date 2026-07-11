@@ -22,9 +22,14 @@ add_executable(cooper_core_tests
   sqlite_database_test.cpp
   session_cache_test.cpp
   usage_ledger_test.cpp
+  ollama_provider_test.cpp
+  openai_provider_test.cpp
+  anthropic_provider_test.cpp
+  gemini_provider_test.cpp
+  provider_factory_test.cpp
 )
 
-target_link_libraries(cooper_core_tests PRIVATE cooper_core GTest::gtest_main)
+target_link_libraries(cooper_core_tests PRIVATE cooper_core GTest::gtest_main GTest::gtest)
 
 target_compile_definitions(cooper_core_tests PRIVATE
   COOPER_TEST_FIXTURES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures"

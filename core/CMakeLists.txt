@@ -33,6 +33,19 @@ else()
   pkg_check_modules(LIBGIT2 REQUIRED libgit2)
 endif()
 
+# OpenSSL backs cpp-httplib's HTTPS support (needed by the OpenAI/Anthropic/Gemini LLM providers;
+# Ollama is typically plain HTTP on localhost). Do NOT silently fall back to no-TLS -- fail loudly
+# with install instructions instead, since 3 of 4 providers would otherwise be silently broken.
+find_package(OpenSSL)
+if(NOT OpenSSL_FOUND)
+  message(FATAL_ERROR
+    "OpenSSL not found. cooper_core requires OpenSSL for HTTPS support in the LLM provider "
+    "clients (OpenAI/Anthropic/Gemini are HTTPS-only). Install it and re-run CMake:\n"
+    "  macOS:   brew install openssl\n"
+    "  Linux:   sudo apt-get install -y libssl-dev\n"
+    "  Windows: vcpkg install openssl:x64-windows (with -DCMAKE_TOOLCHAIN_FILE pointing at vcpkg)")
+endif()
+
 function(cooper_no_rewrite_git_config out_var url)
   set(${out_var} "url.${url}.insteadOf=${url}" PARENT_SCOPE)
 endfunction()
@@ -127,6 +140,30 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(json)
 
+cooper_no_rewrite_git_config(COOPER_HTTPLIB_GIT_CONFIG "https://github.com/yhirose/cpp-httplib.git")
+
+set(HTTPLIB_REQUIRE_OPENSSL ON CACHE BOOL "" FORCE)
+set(HTTPLIB_COMPILE OFF CACHE BOOL "" FORCE)
+
+# Compression support pulls in cpp-httplib's own find_package(ZLIB)/find_package(zstd)/
+# find_package(Brotli) probing, none of which this module needs (only plain JSON bodies over
+# HTTP/HTTPS). On a machine with Homebrew-installed packages sharing the common
+# /opt/homebrew/include prefix, that probing can inject that shared directory into the include
+# path ahead of FetchContent-vendored headers (e.g. googletest's), shadowing them with whatever
+# happens to also be installed system-wide under the same name. Disabling these avoids that
+# entirely, and we don't need response (de)compression for this use case.
+set(HTTPLIB_USE_ZLIB_IF_AVAILABLE OFF CACHE BOOL "" FORCE)
+set(HTTPLIB_USE_BROTLI_IF_AVAILABLE OFF CACHE BOOL "" FORCE)
+set(HTTPLIB_USE_ZSTD_IF_AVAILABLE OFF CACHE BOOL "" FORCE)
+
+FetchContent_Declare(
+  httplib
+  GIT_REPOSITORY https://github.com/yhirose/cpp-httplib.git
+  GIT_TAG v0.49.0
+  GIT_CONFIG "${COOPER_HTTPLIB_GIT_CONFIG}"
+)
+FetchContent_MakeAvailable(httplib)
+
 add_library(cooper_core
   src/parser/parser.cpp
   src/git/repository.cpp
@@ -136,6 +173,11 @@ add_library(cooper_core
   src/data/sqlite_database.cpp
   src/memory/session_cache.cpp
   src/memory/usage_ledger.cpp
+  src/llm/provider_factory.cpp
+  src/llm/ollama_provider.cpp
+  src/llm/openai_provider.cpp
+  src/llm/anthropic_provider.cpp
+  src/llm/gemini_provider.cpp
 )
 
 set_target_properties(cooper_core PROPERTIES OUTPUT_NAME cooper_core_static)
@@ -154,7 +196,12 @@ target_link_libraries(cooper_core PUBLIC
   tree_sitter_python
   sqlite3
   nlohmann_json::nlohmann_json
+  httplib::httplib
+  OpenSSL::SSL
+  OpenSSL::Crypto
 )
+
+target_compile_definitions(cooper_core PUBLIC CPPHTTPLIB_OPENSSL_SUPPORT)
 
 target_include_directories(cooper_core PRIVATE
   ${hnswlib_SOURCE_DIR}
@@ -200,6 +247,12 @@ endif()
 if(COOPER_BUILD_TOOLS)
   add_executable(cooper_db_tool tools/db_tool.cpp)
   target_link_libraries(cooper_db_tool PRIVATE cooper_core)
+
+  add_executable(cooper_llm_ping tools/llm_ping.cpp)
+  target_link_libraries(cooper_llm_ping PRIVATE cooper_core)
+
+  add_executable(cooper_tool_ping tools/tool_ping.cpp)
+  target_link_libraries(cooper_tool_ping PRIVATE cooper_core)
 endif()
 
 if(COOPER_BUILD_TESTS)
