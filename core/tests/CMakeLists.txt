@@ -19,6 +19,9 @@ add_executable(cooper_core_tests
   vector_index_test.cpp
   context_packer_test.cpp
   mock_embedding_provider_test.cpp
+  sqlite_database_test.cpp
+  session_cache_test.cpp
+  usage_ledger_test.cpp
 )
 
 target_link_libraries(cooper_core_tests PRIVATE cooper_core GTest::gtest_main)

@@ -52,3 +52,20 @@ jobs:
 
       - name: Test
         run: ctest --test-dir core/build -C Release --output-on-failure
+
+      - name: Run data-layer verification tool (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          output=$(./core/build/cooper_db_tool "${RUNNER_TEMP}/cooper_ci_demo.db")
+          echo "$output"
+          echo "$output" | grep -q "Matching SQLite rows for this run now: 3"
+
+      - name: Run data-layer verification tool (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $output = & ".\core\build\Release\cooper_db_tool.exe" "$env:RUNNER_TEMP\cooper_ci_demo.db"
+          Write-Output $output
+          if (($output -join "`n") -notmatch "Matching SQLite rows for this run now: 3") {
+            throw "expected output not found in cooper_db_tool output"
+          }

@@ -46,9 +46,28 @@ build-*/
 
 #python ignores
 project.*
-__pycache__
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
 .venv/
+venv/
+env/
+ENV/
 *.egg-info/
+*.egg
+dist/
+wheels/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+pip-log.txt
+pip-delete-this-directory.txt
+.ipynb_checkpoints/
 
 # CMake generated files
 CMakeFiles/
@@ -74,3 +93,4 @@ vcpkg_installed/
 Testing/
 .cache/
 workspace/
+project/

@@ -13,6 +13,7 @@ endif()
 option(COOPER_BUILD_TESTS "Build cooper_core unit tests" ON)
 option(COOPER_ENABLE_LLAMA_CPP "Enable llama.cpp-backed embedding provider" OFF)
 option(COOPER_BUILD_PYTHON_BINDINGS "Build pybind11 Python bindings" ON)
+option(COOPER_BUILD_TOOLS "Build cooper_core CLI tools" ON)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
@@ -96,12 +97,45 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(hnswlib)
 
+# SQLite amalgamation: a plain URL download, not a git fetch, so the
+# no-rewrite git config override does not apply here.
+FetchContent_Declare(
+  sqlite_amalgamation
+  URL https://sqlite.org/2026/sqlite-amalgamation-3530300.zip
+  URL_HASH SHA3_256=d45c688a8cb23f68611a894a756a12d7eb6ab6e9e2468ca70adbeab3808b5ab9
+)
+FetchContent_GetProperties(sqlite_amalgamation)
+if(NOT sqlite_amalgamation_POPULATED)
+  FetchContent_Populate(sqlite_amalgamation)
+endif()
+
+add_library(sqlite3 STATIC
+  ${sqlite_amalgamation_SOURCE_DIR}/sqlite3.c
+)
+target_include_directories(sqlite3 PUBLIC ${sqlite_amalgamation_SOURCE_DIR})
+set_target_properties(sqlite3 PROPERTIES C_STANDARD 11)
+
+cooper_no_rewrite_git_config(COOPER_JSON_GIT_CONFIG "https://github.com/nlohmann/json.git")
+
+set(JSON_BuildTests OFF CACHE BOOL "" FORCE)
+
+FetchContent_Declare(
+  json
+  GIT_REPOSITORY https://github.com/nlohmann/json.git
+  GIT_TAG v3.11.3
+  GIT_CONFIG "${COOPER_JSON_GIT_CONFIG}"
+)
+FetchContent_MakeAvailable(json)
+
 add_library(cooper_core
   src/parser/parser.cpp
   src/git/repository.cpp
   src/vectorstore/vector_index.cpp
   src/embeddings/mock_embedding_provider.cpp
   src/context/context_packer.cpp
+  src/data/sqlite_database.cpp
+  src/memory/session_cache.cpp
+  src/memory/usage_ledger.cpp
 )
 
 set_target_properties(cooper_core PROPERTIES OUTPUT_NAME cooper_core_static)
@@ -118,6 +152,8 @@ target_include_directories(cooper_core PUBLIC
 target_link_libraries(cooper_core PUBLIC
   tree_sitter
   tree_sitter_python
+  sqlite3
+  nlohmann_json::nlohmann_json
 )
 
 target_include_directories(cooper_core PRIVATE
@@ -159,6 +195,11 @@ if(COOPER_BUILD_PYTHON_BINDINGS)
   pybind11_add_module(cooper_core_py src/bindings/module.cpp)
   target_link_libraries(cooper_core_py PRIVATE cooper_core)
   set_target_properties(cooper_core_py PROPERTIES OUTPUT_NAME cooper_core)
+endif()
+
+if(COOPER_BUILD_TOOLS)
+  add_executable(cooper_db_tool tools/db_tool.cpp)
+  target_link_libraries(cooper_db_tool PRIVATE cooper_core)
 endif()
 
 if(COOPER_BUILD_TESTS)
