@@ -94,3 +94,5 @@ Testing/
 .cache/
 workspace/
 project/
+
+.DS_Store

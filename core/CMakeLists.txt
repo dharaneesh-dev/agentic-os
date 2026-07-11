@@ -178,6 +178,12 @@ add_library(cooper_core
   src/llm/openai_provider.cpp
   src/llm/anthropic_provider.cpp
   src/llm/gemini_provider.cpp
+  src/agent/read_file_tool.cpp
+  src/agent/write_file_tool.cpp
+  src/agent/search_codebase_tool.cpp
+  src/agent/run_tests_tool.cpp
+  src/agent/agent_loop.cpp
+  src/agent/roles.cpp
 )
 
 set_target_properties(cooper_core PROPERTIES OUTPUT_NAME cooper_core_static)
@@ -253,6 +259,11 @@ if(COOPER_BUILD_TOOLS)
 
   add_executable(cooper_tool_ping tools/tool_ping.cpp)
   target_link_libraries(cooper_tool_ping PRIVATE cooper_core)
+
+  add_executable(cooper_agent_ping tools/agent_ping.cpp)
+  target_link_libraries(cooper_agent_ping PRIVATE cooper_core)
+  target_compile_definitions(cooper_agent_ping PRIVATE
+    COOPER_ORCHESTRATOR_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../orchestrator")
 endif()
 
 if(COOPER_BUILD_TESTS)

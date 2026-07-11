@@ -27,12 +27,18 @@ add_executable(cooper_core_tests
   anthropic_provider_test.cpp
   gemini_provider_test.cpp
   provider_factory_test.cpp
+  read_file_tool_test.cpp
+  write_file_tool_test.cpp
+  search_codebase_tool_test.cpp
+  run_tests_tool_test.cpp
+  agent_loop_test.cpp
 )
 
 target_link_libraries(cooper_core_tests PRIVATE cooper_core GTest::gtest_main GTest::gtest)
 
 target_compile_definitions(cooper_core_tests PRIVATE
   COOPER_TEST_FIXTURES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures"
+  COOPER_ORCHESTRATOR_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../../orchestrator"
 )
 
 include(GoogleTest)
