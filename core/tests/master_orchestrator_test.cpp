@@ -79,14 +79,23 @@ void WriteFixtureFile(const std::filesystem::path& path, const std::string& cont
 std::filesystem::path OrchestratorDir() { return std::filesystem::path(COOPER_ORCHESTRATOR_DIR); }
 
 int CountCommits(const std::filesystem::path& repo_root) {
+#ifdef _WIN32
+  std::string command = "git -C \"" + repo_root.string() + "\" rev-list --count HEAD 2>NUL";
+  FILE* pipe = _popen(command.c_str(), "r");
+#else
   std::string command = "git -C '" + repo_root.string() + "' rev-list --count HEAD 2>/dev/null";
   FILE* pipe = popen(command.c_str(), "r");
+#endif
   if (pipe == nullptr) {
     return 0;
   }
   char buffer[64] = {};
   bool has_line = fgets(buffer, sizeof(buffer), pipe) != nullptr;
+#ifdef _WIN32
+  _pclose(pipe);
+#else
   pclose(pipe);
+#endif
   if (!has_line) {
     return 0;
   }

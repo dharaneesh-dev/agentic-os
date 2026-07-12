@@ -23,7 +23,11 @@ std::string NowIso8601() {
   auto now = std::chrono::system_clock::now();
   std::time_t now_time = std::chrono::system_clock::to_time_t(now);
   std::tm tm_utc{};
+#ifdef _WIN32
+  gmtime_s(&tm_utc, &now_time);
+#else
   gmtime_r(&now_time, &tm_utc);
+#endif
   char buffer[32];
   std::strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%SZ", &tm_utc);
   return std::string(buffer);
