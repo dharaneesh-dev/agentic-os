@@ -2,12 +2,14 @@
 
 #include "cooper/core/agent/tool.hpp"
 #include "cooper/core/embeddings/embedding_provider.hpp"
+#include "cooper/core/knowledge/dependency_graph.hpp"
 #include "cooper/core/parser/code_chunk.hpp"
 #include "cooper/core/vectorstore/vector_index.hpp"
 
 #include <filesystem>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace cooper::core::agent {
@@ -16,7 +18,10 @@ namespace cooper::core::agent {
 // constructing this tool for a role that never ends up calling it stays cheap.
 class SearchCodebaseTool : public Tool {
  public:
-  SearchCodebaseTool(std::filesystem::path repo_root, embeddings::EmbeddingProvider& embedder, int token_budget);
+  // enable_dependency_graph exists mainly so tests can compare boosted vs. vector-only behavior
+  // on identical data; production call sites should leave it at the default.
+  SearchCodebaseTool(std::filesystem::path repo_root, embeddings::EmbeddingProvider& embedder, int token_budget,
+                      bool enable_dependency_graph = true);
 
   llm::ToolDefinition Definition() const override;
   std::string Execute(const std::string& arguments_json) override;
@@ -28,13 +33,17 @@ class SearchCodebaseTool : public Tool {
   };
 
   void EnsureIndexBuilt();
+  std::string ChunkKeyFor(const IndexedChunk& indexed) const;
 
   std::filesystem::path repo_root_;
   embeddings::EmbeddingProvider& embedder_;
   int token_budget_;
+  bool enable_dependency_graph_;
   bool index_built_ = false;
   std::vector<IndexedChunk> chunks_by_id_;
+  std::unordered_map<std::string, size_t> id_by_chunk_key_;
   std::unique_ptr<vectorstore::VectorIndex> index_;
+  knowledge::DependencyGraph graph_;
 };
 
 }  // namespace cooper::core::agent

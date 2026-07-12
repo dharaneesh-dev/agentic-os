@@ -10,8 +10,8 @@ using cooper::core::parser::Parser;
 
 namespace {
 
-std::filesystem::path SampleFixturePath() {
-  return std::filesystem::path(COOPER_TEST_FIXTURES_DIR) / "sample.py";
+std::filesystem::path FixturePath(const std::string& name) {
+  return std::filesystem::path(COOPER_TEST_FIXTURES_DIR) / name;
 }
 
 const CodeChunk& FindChunk(const std::vector<CodeChunk>& chunks, const std::string& name) {
@@ -22,9 +22,9 @@ const CodeChunk& FindChunk(const std::vector<CodeChunk>& chunks, const std::stri
 
 }  // namespace
 
-TEST(ParserTest, ParsesFunctionsAndClassFromFixture) {
+TEST(ParserCppTest, ParsesFunctionsAndClassFromFixture) {
   Parser parser;
-  std::vector<CodeChunk> chunks = parser.ParseFile(SampleFixturePath());
+  std::vector<CodeChunk> chunks = parser.ParseFile(FixturePath("sample.cpp"));
 
   ASSERT_EQ(chunks.size(), 4u);
 
@@ -42,12 +42,12 @@ TEST(ParserTest, ParsesFunctionsAndClassFromFixture) {
   EXPECT_EQ(class_count, 1);
 }
 
-TEST(ParserTest, TopLevelDefsAreNonOverlapping) {
+TEST(ParserCppTest, TopLevelDefsAreNonOverlapping) {
   Parser parser;
-  std::vector<CodeChunk> chunks = parser.ParseFile(SampleFixturePath());
+  std::vector<CodeChunk> chunks = parser.ParseFile(FixturePath("sample.cpp"));
 
-  const CodeChunk& add = FindChunk(chunks, "add");
-  const CodeChunk& subtract = FindChunk(chunks, "subtract");
+  const CodeChunk& add = FindChunk(chunks, "Add");
+  const CodeChunk& subtract = FindChunk(chunks, "Subtract");
   const CodeChunk& calculator = FindChunk(chunks, "Calculator");
 
   EXPECT_EQ(add.kind, "function");
@@ -58,11 +58,11 @@ TEST(ParserTest, TopLevelDefsAreNonOverlapping) {
   EXPECT_LT(subtract.end_line, calculator.start_line);
 }
 
-TEST(ParserTest, FindsNestedMethodInsideClass) {
+TEST(ParserCppTest, FindsNestedMethodInsideClass) {
   Parser parser;
-  std::vector<CodeChunk> chunks = parser.ParseFile(SampleFixturePath());
+  std::vector<CodeChunk> chunks = parser.ParseFile(FixturePath("sample.cpp"));
 
-  const CodeChunk& multiply = FindChunk(chunks, "multiply");
+  const CodeChunk& multiply = FindChunk(chunks, "Multiply");
   const CodeChunk& calculator = FindChunk(chunks, "Calculator");
 
   EXPECT_EQ(multiply.kind, "function");
@@ -70,12 +70,15 @@ TEST(ParserTest, FindsNestedMethodInsideClass) {
   EXPECT_LE(multiply.end_line, calculator.end_line);
 }
 
-TEST(ParserTest, ThrowsOnUnreadableFile) {
+TEST(ParserCppTest, ResolvesOutOfLineQualifiedMethodName) {
   Parser parser;
-  EXPECT_THROW(parser.ParseFile("/nonexistent/path/does_not_exist.py"), std::runtime_error);
+  std::vector<CodeChunk> chunks = parser.ParseFile(FixturePath("sample_qualified.cpp"));
+
+  const CodeChunk& compute = FindChunk(chunks, "Compute");
+  EXPECT_EQ(compute.kind, "function");
 }
 
-TEST(ParserTest, ThrowsOnUnsupportedExtension) {
+TEST(ParserCppTest, ThrowsOnUnreadableFile) {
   Parser parser;
-  EXPECT_THROW(parser.ParseFile("/nonexistent/path/does_not_exist.rs"), std::runtime_error);
+  EXPECT_THROW(parser.ParseFile("/nonexistent/path/does_not_exist.hpp"), std::runtime_error);
 }

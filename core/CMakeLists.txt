@@ -100,6 +100,32 @@ target_include_directories(tree_sitter_python PRIVATE
 target_link_libraries(tree_sitter_python PUBLIC tree_sitter)
 set_target_properties(tree_sitter_python PROPERTIES C_STANDARD 11)
 
+cooper_no_rewrite_git_config(COOPER_TSCPP_GIT_CONFIG "https://github.com/tree-sitter/tree-sitter-cpp.git")
+
+FetchContent_Declare(
+  tree_sitter_cpp
+  GIT_REPOSITORY https://github.com/tree-sitter/tree-sitter-cpp.git
+  GIT_TAG v0.23.4
+  GIT_CONFIG "${COOPER_TSCPP_GIT_CONFIG}"
+)
+FetchContent_GetProperties(tree_sitter_cpp)
+if(NOT tree_sitter_cpp_POPULATED)
+  FetchContent_Populate(tree_sitter_cpp)
+endif()
+
+add_library(tree_sitter_cpp STATIC
+  ${tree_sitter_cpp_SOURCE_DIR}/src/parser.c
+  ${tree_sitter_cpp_SOURCE_DIR}/src/scanner.c
+)
+target_include_directories(tree_sitter_cpp PUBLIC
+  ${tree_sitter_cpp_SOURCE_DIR}/bindings/c
+)
+target_include_directories(tree_sitter_cpp PRIVATE
+  ${tree_sitter_cpp_SOURCE_DIR}/src
+)
+target_link_libraries(tree_sitter_cpp PUBLIC tree_sitter)
+set_target_properties(tree_sitter_cpp PROPERTIES C_STANDARD 11)
+
 cooper_no_rewrite_git_config(COOPER_HNSW_GIT_CONFIG "https://github.com/nmslib/hnswlib.git")
 
 FetchContent_Declare(
@@ -186,6 +212,8 @@ add_library(cooper_core
   src/agent/roles.cpp
   src/orchestrator/tracking_provider.cpp
   src/orchestrator/master_orchestrator.cpp
+  src/knowledge/dependency_graph.cpp
+  src/knowledge/document_ingestion.cpp
 )
 
 set_target_properties(cooper_core PROPERTIES OUTPUT_NAME cooper_core_static)
@@ -202,6 +230,7 @@ target_include_directories(cooper_core PUBLIC
 target_link_libraries(cooper_core PUBLIC
   tree_sitter
   tree_sitter_python
+  tree_sitter_cpp
   sqlite3
   nlohmann_json::nlohmann_json
   httplib::httplib

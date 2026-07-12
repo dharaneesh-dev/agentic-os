@@ -15,6 +15,7 @@ FetchContent_MakeAvailable(googletest)
 
 add_executable(cooper_core_tests
   parser_test.cpp
+  parser_cpp_test.cpp
   git_repository_test.cpp
   vector_index_test.cpp
   context_packer_test.cpp
@@ -33,6 +34,8 @@ add_executable(cooper_core_tests
   run_tests_tool_test.cpp
   agent_loop_test.cpp
   master_orchestrator_test.cpp
+  dependency_graph_test.cpp
+  document_ingestion_test.cpp
 )
 
 target_link_libraries(cooper_core_tests PRIVATE cooper_core GTest::gtest_main GTest::gtest)
