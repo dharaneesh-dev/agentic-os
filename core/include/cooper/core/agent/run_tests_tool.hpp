@@ -8,6 +8,13 @@
 
 namespace cooper::core::agent {
 
+struct RunTestsResult {
+  bool passed = false;
+  std::string test_stdout;
+  std::string test_stderr;
+  int exit_code = 0;
+};
+
 class RunTestsTool : public Tool {
  public:
   RunTestsTool(std::filesystem::path repo_root, std::vector<std::string> test_command, std::string docker_image,
@@ -16,6 +23,11 @@ class RunTestsTool : public Tool {
 
   llm::ToolDefinition Definition() const override;
   std::string Execute(const std::string& arguments_json) override;
+
+  // runs the sandboxed test command once and returns the structured result, without formatting
+  // it into the model-facing string Execute() produces. The authoritative gate for callers (like
+  // the orchestrator) that need to inspect passed/stdout/stderr/exit_code directly.
+  RunTestsResult RunOnce();
 
  private:
   std::filesystem::path repo_root_;

@@ -32,6 +32,7 @@ add_executable(cooper_core_tests
   search_codebase_tool_test.cpp
   run_tests_tool_test.cpp
   agent_loop_test.cpp
+  master_orchestrator_test.cpp
 )
 
 target_link_libraries(cooper_core_tests PRIVATE cooper_core GTest::gtest_main GTest::gtest)

@@ -94,14 +94,18 @@ nlohmann::json ParseJsonFromOutput(const std::string& output) {
   throw std::runtime_error("run_tests: run_tests_cli produced no parseable JSON output:\n" + output);
 }
 
-std::string FormatResult(const nlohmann::json& result_json) {
-  bool passed = result_json.at("passed").get<bool>();
-  std::string test_stdout = result_json.at("stdout").get<std::string>();
-  std::string test_stderr = result_json.at("stderr").get<std::string>();
-  int exit_code = result_json.at("exit_code").get<int>();
+RunTestsResult ToRunTestsResult(const nlohmann::json& result_json) {
+  RunTestsResult result;
+  result.passed = result_json.at("passed").get<bool>();
+  result.test_stdout = result_json.at("stdout").get<std::string>();
+  result.test_stderr = result_json.at("stderr").get<std::string>();
+  result.exit_code = result_json.at("exit_code").get<int>();
+  return result;
+}
 
-  return std::string(passed ? "PASSED" : "FAILED") + " (exit code " + std::to_string(exit_code) + ")\n\nstdout:\n" +
-         test_stdout + "\n\nstderr:\n" + test_stderr;
+std::string FormatResult(const RunTestsResult& result) {
+  return std::string(result.passed ? "PASSED" : "FAILED") + " (exit code " + std::to_string(result.exit_code) +
+         ")\n\nstdout:\n" + result.test_stdout + "\n\nstderr:\n" + result.test_stderr;
 }
 
 }  // namespace
@@ -124,7 +128,7 @@ llm::ToolDefinition RunTestsTool::Definition() const {
   return tool;
 }
 
-std::string RunTestsTool::Execute(const std::string& /*arguments_json*/) {
+RunTestsResult RunTestsTool::RunOnce() {
   nlohmann::json payload = {{"repo_path", repo_root_.string()},
                              {"command", test_command_},
                              {"sandbox_settings",
@@ -179,7 +183,9 @@ std::string RunTestsTool::Execute(const std::string& /*arguments_json*/) {
   pclose(pipe);
 #endif
 
-  return FormatResult(ParseJsonFromOutput(raw_output));
+  return ToRunTestsResult(ParseJsonFromOutput(raw_output));
 }
+
+std::string RunTestsTool::Execute(const std::string& /*arguments_json*/) { return FormatResult(RunOnce()); }
 
 }  // namespace cooper::core::agent

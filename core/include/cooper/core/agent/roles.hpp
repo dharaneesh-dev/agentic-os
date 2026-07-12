@@ -32,4 +32,9 @@ RoleSetup MakeProductManagerRole(const std::filesystem::path& repo_root, embeddi
 
 RoleSetup MakeManagerRole(const std::filesystem::path& repo_root);
 
+RoleSetup MakeSchedulerRole();
+
+RoleSetup MakeDiagnoserRole(const std::filesystem::path& repo_root, embeddings::EmbeddingProvider& embedder,
+                             int search_token_budget);
+
 }  // namespace cooper::core::agent

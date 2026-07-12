@@ -184,6 +184,8 @@ add_library(cooper_core
   src/agent/run_tests_tool.cpp
   src/agent/agent_loop.cpp
   src/agent/roles.cpp
+  src/orchestrator/tracking_provider.cpp
+  src/orchestrator/master_orchestrator.cpp
 )
 
 set_target_properties(cooper_core PROPERTIES OUTPUT_NAME cooper_core_static)
@@ -263,6 +265,11 @@ if(COOPER_BUILD_TOOLS)
   add_executable(cooper_agent_ping tools/agent_ping.cpp)
   target_link_libraries(cooper_agent_ping PRIVATE cooper_core)
   target_compile_definitions(cooper_agent_ping PRIVATE
+    COOPER_ORCHESTRATOR_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../orchestrator")
+
+  add_executable(cooper_master tools/master.cpp)
+  target_link_libraries(cooper_master PRIVATE cooper_core)
+  target_compile_definitions(cooper_master PRIVATE
     COOPER_ORCHESTRATOR_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../orchestrator")
 endif()
 

@@ -75,4 +75,35 @@ RoleSetup MakeManagerRole(const std::filesystem::path& repo_root) {
   return setup;
 }
 
+RoleSetup MakeSchedulerRole() {
+  RoleSetup setup;
+
+  setup.config.max_steps = 3;
+  setup.config.system_prompt =
+      "You are the Scheduler agent in Cooper. Given a list of subtasks, decide the order they "
+      "should be implemented in - a subtask that others depend on must come first - and call "
+      "finish with every subtask id exactly once in ordered_subtask_ids, plus a short rationale.";
+  setup.config.finish_tool = FinishTool(
+      R"({"type":"object","properties":{"ordered_subtask_ids":{"type":"array","items":{"type":"string"}},)"
+      R"("rationale":{"type":"string"}},"required":["ordered_subtask_ids","rationale"]})");
+  return setup;
+}
+
+RoleSetup MakeDiagnoserRole(const std::filesystem::path& repo_root, embeddings::EmbeddingProvider& embedder,
+                             int search_token_budget) {
+  RoleSetup setup;
+  setup.tools.push_back(std::make_unique<ReadFileTool>(repo_root));
+  setup.tools.push_back(std::make_unique<SearchCodebaseTool>(repo_root, embedder, search_token_budget));
+
+  setup.config.max_steps = 6;
+  setup.config.system_prompt =
+      "You are the Diagnoser agent in Cooper. Use read_file and search_codebase to investigate why "
+      "the test suite failed, then call finish with a diagnosis of the root cause and a concrete "
+      "suggested_fix for the Coder to apply.";
+  setup.config.finish_tool = FinishTool(
+      R"({"type":"object","properties":{"diagnosis":{"type":"string"},"suggested_fix":{"type":"string"}},)"
+      R"("required":["diagnosis","suggested_fix"]})");
+  return setup;
+}
+
 }  // namespace cooper::core::agent
